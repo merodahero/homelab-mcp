@@ -1,0 +1,42 @@
+# Homelab MCP Configuration
+# Copy to config.yaml and update with your values
+
+server:
+  host: "0.0.0.0"
+  port: 6971
+  transport: "streamable-http"  # or "sse", "stdio"
+
+# Enable/disable services
+services:
+  nginx_proxy_manager:
+    enabled: true
+    url: "http://192.168.1.100:81"
+    username: "admin@example.com"
+    password: "changeme"
+
+  pihole:
+    enabled: false
+    url: "http://192.168.1.53"
+    api_key: "your-api-key"
+
+  uptime_kuma:
+    enabled: false
+    url: "http://192.168.1.100:3001"
+    username: "admin"
+    password: "changeme"
+
+  ups_nut:
+    enabled: false
+    host: "192.168.1.100"
+    port: 3493
+    ups_name: "ups"
+
+  portainer:
+    enabled: false
+    url: "http://192.168.1.100:9000"
+    api_key: "your-api-key"
+
+# Logging configuration
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

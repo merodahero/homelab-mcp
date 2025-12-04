@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  homelab-mcp:
+    build: .
+    container_name: homelab-mcp
+    restart: unless-stopped
+    ports:
+      - "6971:6971"
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+    environment:
+      - HOMELAB_MCP_CONFIG=/app/config.yaml
+      - TZ=UTC
+    networks:
+      - homelab
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:6971/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  homelab:
+    driver: bridge
