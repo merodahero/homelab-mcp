@@ -36,6 +36,22 @@ services:
     url: "http://192.168.1.100:9000"
     api_key: "your-api-key"
 
+  adguard_home:
+    enabled: false
+    url: "http://192.168.1.100:3000"
+    username: "admin"
+    password: "changeme"
+
+  technitium:
+    enabled: false
+    url: "http://192.168.1.100:5380"
+    api_token: "your-api-token"
+
+  netbox:
+    enabled: false
+    url: "http://192.168.1.100:8000"
+    api_token: "your-api-token"
+
 # Logging configuration
 logging:
   level: "INFO"  # DEBUG, INFO, WARNING, ERROR

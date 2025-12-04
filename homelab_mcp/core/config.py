@@ -53,6 +53,28 @@ class PortainerConfig(BaseModel):
     api_key: str = ""
 
 
+class AdGuardHomeConfig(BaseModel):
+    """AdGuard Home service configuration."""
+    enabled: bool = False
+    url: str = ""
+    username: str = ""
+    password: str = ""
+
+
+class TechnitiumConfig(BaseModel):
+    """Technitium DNS service configuration."""
+    enabled: bool = False
+    url: str = ""
+    api_token: str = ""
+
+
+class NetBoxConfig(BaseModel):
+    """NetBox DCIM/IPAM service configuration."""
+    enabled: bool = False
+    url: str = ""
+    api_token: str = ""
+
+
 class ServicesConfig(BaseModel):
     """All services configuration."""
     nginx_proxy_manager: NginxProxyManagerConfig = Field(default_factory=NginxProxyManagerConfig)
@@ -60,6 +82,9 @@ class ServicesConfig(BaseModel):
     uptime_kuma: UptimeKumaConfig = Field(default_factory=UptimeKumaConfig)
     ups_nut: UpsNutConfig = Field(default_factory=UpsNutConfig)
     portainer: PortainerConfig = Field(default_factory=PortainerConfig)
+    adguard_home: AdGuardHomeConfig = Field(default_factory=AdGuardHomeConfig)
+    technitium: TechnitiumConfig = Field(default_factory=TechnitiumConfig)
+    netbox: NetBoxConfig = Field(default_factory=NetBoxConfig)
 
 
 class LoggingConfig(BaseModel):

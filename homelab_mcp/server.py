@@ -8,9 +8,12 @@ from fastmcp import FastMCP
 from .core.config import Config, get_config
 from .core.health import HealthStatus, ServiceHealth, health_checker
 from .services.base import ServiceBase
+from .services.adguard import AdGuardHomeService
+from .services.netbox import NetBoxService
 from .services.nginx_proxy_manager import NginxProxyManagerService
 from .services.pihole import PiholeService
 from .services.portainer import PortainerService
+from .services.technitium import TechnitiumService
 from .services.ups_nut import UpsNutService
 from .services.uptime_kuma import UptimeKumaService
 
@@ -83,6 +86,18 @@ def create_server(config: Config | None = None) -> FastMCP:
             "portainer": {
                 "enabled": services_config.portainer.enabled,
                 "url": services_config.portainer.url if services_config.portainer.enabled else None,
+            },
+            "adguard_home": {
+                "enabled": services_config.adguard_home.enabled,
+                "url": services_config.adguard_home.url if services_config.adguard_home.enabled else None,
+            },
+            "technitium": {
+                "enabled": services_config.technitium.enabled,
+                "url": services_config.technitium.url if services_config.technitium.enabled else None,
+            },
+            "netbox": {
+                "enabled": services_config.netbox.enabled,
+                "url": services_config.netbox.url if services_config.netbox.enabled else None,
             },
         }
     
@@ -158,6 +173,39 @@ def _register_services(mcp: FastMCP, config: Config) -> None:
             logger.info("Portainer service enabled")
         except Exception as e:
             logger.error(f"Failed to register Portainer: {e}")
+    
+    # AdGuard Home
+    if config.services.adguard_home.enabled:
+        try:
+            service = AdGuardHomeService(config.services.adguard_home)
+            service.register_tools(mcp)
+            service.register_health_check(health_checker)
+            _active_services.append(service)
+            logger.info("AdGuard Home service enabled")
+        except Exception as e:
+            logger.error(f"Failed to register AdGuard Home: {e}")
+    
+    # Technitium DNS
+    if config.services.technitium.enabled:
+        try:
+            service = TechnitiumService(config.services.technitium)
+            service.register_tools(mcp)
+            service.register_health_check(health_checker)
+            _active_services.append(service)
+            logger.info("Technitium DNS service enabled")
+        except Exception as e:
+            logger.error(f"Failed to register Technitium: {e}")
+    
+    # NetBox
+    if config.services.netbox.enabled:
+        try:
+            service = NetBoxService(config.services.netbox)
+            service.register_tools(mcp)
+            service.register_health_check(health_checker)
+            _active_services.append(service)
+            logger.info("NetBox service enabled")
+        except Exception as e:
+            logger.error(f"Failed to register NetBox: {e}")
 
 
 async def cleanup() -> None:
