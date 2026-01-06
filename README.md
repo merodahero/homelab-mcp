@@ -18,13 +18,17 @@ A modular MCP (Model Context Protocol) server for homelab service management. Pr
 | **Uptime Kuma** | Service availability monitoring | ✅ Ready |
 | **Portainer** | Docker management across hosts | ✅ Ready |
 | **UPS NUT** | UPS power monitoring | ✅ Ready |
+| **Netgear Orbi** | WiFi mesh system management | ✅ Ready |
+| **AdGuard Home** | DNS ad-blocking alternative | ✅ Ready |
+| **Technitium** | DNS server management | ✅ Ready |
+| **NetBox** | DCIM/IPAM network documentation | ✅ Ready |
 
 ## Quick Start
 
 ### 1. Clone and Configure
 
 ```bash
-git clone https://github.com/yourusername/homelab-mcp.git
+git clone https://github.com/HavartiBard/homelab-mcp.git
 cd homelab-mcp
 
 # Copy and edit configuration
@@ -109,6 +113,17 @@ services:
 - `ups_get_all_variables` - All UPS variables
 - `ups_list_devices` - List UPS devices
 - `ups_check_power_status` - Quick power status check
+
+### Netgear Orbi
+- `orbi_get_info` - Router model, serial number, firmware version
+- `orbi_get_attached_devices` - List all connected devices with IP, MAC, signal strength
+- `orbi_get_traffic_meter` - Bandwidth usage statistics (today/month)
+- `orbi_block_device` - Block a device by MAC address
+- `orbi_allow_device` - Unblock a previously blocked device
+- `orbi_check_firmware` - Check for available firmware updates
+- `orbi_get_guest_wifi_status` - Get guest network status (2.4GHz/5GHz)
+- `orbi_set_guest_wifi` - Enable/disable guest WiFi networks
+- `orbi_reboot` - Reboot the router (causes temporary network outage)
 
 ## Deployment
 

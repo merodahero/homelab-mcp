@@ -75,6 +75,16 @@ class NetBoxConfig(BaseModel):
     api_token: str = ""
 
 
+class OrbiConfig(BaseModel):
+    """Netgear Orbi WiFi mesh service configuration."""
+    enabled: bool = False
+    host: str = ""
+    password: str = ""
+    username: str = "admin"
+    port: int = 80
+    ssl: bool = False
+
+
 class ServicesConfig(BaseModel):
     """All services configuration."""
     nginx_proxy_manager: NginxProxyManagerConfig = Field(default_factory=NginxProxyManagerConfig)
@@ -85,6 +95,7 @@ class ServicesConfig(BaseModel):
     adguard_home: AdGuardHomeConfig = Field(default_factory=AdGuardHomeConfig)
     technitium: TechnitiumConfig = Field(default_factory=TechnitiumConfig)
     netbox: NetBoxConfig = Field(default_factory=NetBoxConfig)
+    orbi: OrbiConfig = Field(default_factory=OrbiConfig)
 
 
 class LoggingConfig(BaseModel):

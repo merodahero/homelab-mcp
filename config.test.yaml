@@ -1,0 +1,29 @@
+# Minimal test configuration for Docker testing
+# All services disabled - just tests server startup
+
+server:
+  host: "0.0.0.0"
+  port: 6971
+  transport: "streamable-http"
+
+services:
+  nginx_proxy_manager:
+    enabled: false
+  pihole:
+    enabled: false
+  uptime_kuma:
+    enabled: false
+  ups_nut:
+    enabled: false
+  portainer:
+    enabled: false
+  adguard_home:
+    enabled: false
+  technitium:
+    enabled: false
+  netbox:
+    enabled: false
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

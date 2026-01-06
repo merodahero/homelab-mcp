@@ -11,6 +11,7 @@ from .services.base import ServiceBase
 from .services.adguard import AdGuardHomeService
 from .services.netbox import NetBoxService
 from .services.nginx_proxy_manager import NginxProxyManagerService
+from .services.orbi import OrbiService
 from .services.pihole import PiholeService
 from .services.portainer import PortainerService
 from .services.technitium import TechnitiumService
@@ -42,10 +43,7 @@ def create_server(config: Config | None = None) -> FastMCP:
     )
     
     # Create MCP server
-    mcp = FastMCP(
-        "Homelab MCP",
-        description="A modular MCP server for homelab service management",
-    )
+    mcp = FastMCP("Homelab MCP")
     
     # Register core health check tool
     @mcp.tool()
@@ -98,6 +96,10 @@ def create_server(config: Config | None = None) -> FastMCP:
             "netbox": {
                 "enabled": services_config.netbox.enabled,
                 "url": services_config.netbox.url if services_config.netbox.enabled else None,
+            },
+            "orbi": {
+                "enabled": services_config.orbi.enabled,
+                "host": services_config.orbi.host if services_config.orbi.enabled else None,
             },
         }
     
@@ -206,6 +208,17 @@ def _register_services(mcp: FastMCP, config: Config) -> None:
             logger.info("NetBox service enabled")
         except Exception as e:
             logger.error(f"Failed to register NetBox: {e}")
+    
+    # Orbi
+    if config.services.orbi.enabled:
+        try:
+            service = OrbiService(config.services.orbi)
+            service.register_tools(mcp)
+            service.register_health_check(health_checker)
+            _active_services.append(service)
+            logger.info("Orbi WiFi service enabled")
+        except Exception as e:
+            logger.error(f"Failed to register Orbi: {e}")
 
 
 async def cleanup() -> None:

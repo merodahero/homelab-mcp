@@ -63,14 +63,7 @@ def main() -> None:
     # Create server
     mcp = create_server(config)
     
-    # Setup signal handlers for graceful shutdown
-    def signal_handler(sig: int, frame: object) -> None:
-        logger.info("Received shutdown signal, cleaning up...")
-        asyncio.get_event_loop().run_until_complete(cleanup())
-        sys.exit(0)
-    
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
+    # Note: FastMCP handles its own signal handling for graceful shutdown
     
     # Run the server
     logger.info(
