@@ -44,6 +44,10 @@ class UpsNutConfig(BaseModel):
     host: str = ""
     port: int = 3493
     ups_name: str = "ups"
+    username: str = ""  # NUT USERNAME for authenticated commands (LIST VAR, GET, etc.)
+    password: str = ""  # NUT PASSWORD
+    rw_username: str = ""  # Optional: RW user for SET/INSTCMD (leave blank to disable writes)
+    rw_password: str = ""
 
 
 class PortainerConfig(BaseModel):

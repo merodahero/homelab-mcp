@@ -1,0 +1,40 @@
+server:
+  host: "0.0.0.0"
+  port: 8765
+  transport: "streamable-http"
+
+services:
+  # All other services disabled — we only need the UPS for this deploy.
+  nginx_proxy_manager:
+    enabled: false
+  pihole:
+    enabled: false
+  uptime_kuma:
+    enabled: false
+  portainer:
+    enabled: false
+  adguard_home:
+    enabled: false
+  technitium:
+    enabled: false
+  netbox:
+    enabled: false
+  orbi:
+    enabled: false
+
+  ups_nut:
+    enabled: true
+    host: "127.0.0.1"
+    port: 3493
+    ups_name: "srvspm3kil"
+    # Read-only user (NUT monuser)
+    username: "monuser"
+    password: "Mf2317277"
+    # RW user (NUT realpower_user) — used for SET/INSTCMD, including the
+    # watts overlay (srvspm3kil_realpower) and any future test commands.
+    rw_username: "realpower_user"
+    rw_password: "srvspm3kil_W"
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

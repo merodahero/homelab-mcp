@@ -1,0 +1,27 @@
+server:
+  host: "0.0.0.0"
+  port: 8765
+  transport: "streamable-http"
+
+services:
+  nginx_proxy_manager: {enabled: false}
+  pihole: {enabled: false}
+  uptime_kuma: {enabled: false}
+  portainer: {enabled: false}
+  adguard_home: {enabled: false}
+  technitium: {enabled: false}
+  netbox: {enabled: false}
+  orbi: {enabled: false}
+
+  ups_nut:
+    enabled: true
+    host: "127.0.0.1"
+    port: 13493  # local SSH-forwarded vault NUT port (for tower test)
+    ups_name: "srvspm3kil"
+    username: "monuser"
+    password: "Mf2317277"
+    rw_username: "realpower_user"
+    rw_password: "srvspm3kil_W"
+
+logging:
+  level: "INFO"
