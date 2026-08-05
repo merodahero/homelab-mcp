@@ -1,0 +1,86 @@
+#!/bin/sh
+# rc.nut-mcp-restore — append-only guard that re-installs the
+# srvspm3kil_realpower (watts-overlay) UPS section in /etc/nut/ups.conf and
+# restarts the homelab-mcp + watts helper after every boot.
+#
+# Why: /opt is tmpfs on Unraid so the homelab-mcp install dies on reboot,
+# AND the nut-dw plugin's write_config clobbers the [srvspm3kil_realpower]
+# block on every save (known since 2026-07-21). This script restores both.
+#
+# Idempotent: safe to run on every boot.
+#
+# Triggered from /etc/rc.local tail after NUT is up.
+
+set -eu
+
+UPS_CONF="/etc/nut/ups.conf"
+MCP_RC="/etc/rc.d/rc.homelab-mcp"
+HELPER="/etc/nut/dummy-ups/ups_realpower.py"
+LOG="/var/log/nut-mcp-restore.log"
+
+log() { echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] $*" >> "${LOG}"; }
+
+log "boot-time restore: starting"
+
+# 1. Make sure the watts-overlay UPS section is in ups.conf
+if ! grep -q "^\[srvspm3kil_realpower\]" "${UPS_CONF}" 2>/dev/null; then
+    log "appending srvspm3kil_realpower section to ups.conf"
+    cat >> "${UPS_CONF}" <<'EOF'
+
+[srvspm3kil_realpower]
+    driver = dummy-ups
+    port = /etc/nut/srvspm3kil_realpower.dev
+    desc = "Watts overlay (V * I * 0.95 from apcsmart srvspm3kil)"
+    mode = dummy-once
+EOF
+    chmod 640 "${UPS_CONF}" 2>/dev/null || true
+    chown root:nut "${UPS_CONF}" 2>/dev/null || true
+    NEED_NUT_RESTART=1
+else
+    log "srvspm3kil_realpower section already present"
+    NEED_NUT_RESTART=0
+fi
+
+# 2. Restart NUT if we changed ups.conf
+if [ "${NEED_NUT_RESTART}" = "1" ]; then
+    log "restarting NUT to pick up new section"
+    if [ -x /etc/rc.d/rc.nut ]; then
+        /etc/rc.d/rc.nut restart >>"${LOG}" 2>&1 || log "rc.nut restart failed"
+        sleep 3
+    fi
+fi
+
+# 3. Make sure the watts helper is running
+if ! pgrep -f ups_realpower.py >/dev/null 2>&1; then
+    log "starting watts helper"
+    if [ -f "${HELPER}" ]; then
+        nohup python3 "${HELPER}" >>/var/log/nut-watts-overlay.log 2>&1 &
+        sleep 2
+    else
+        log "WARN: helper ${HELPER} missing — deploy homelab-mcp first"
+    fi
+else
+    log "watts helper already running"
+fi
+
+# 4. /opt/homelab-mcp is a symlink to /mnt/cache/homelab-mcp — durable across
+#    reboots (cache pool). Just ensure the symlink exists.
+if [ ! -e /opt/homelab-mcp ]; then
+    if [ -d /mnt/cache/homelab-mcp/.venv ]; then
+        ln -sfn /mnt/cache/homelab-mcp /opt/homelab-mcp
+        log "re-created /opt/homelab-mcp symlink"
+    else
+        log "ERROR: /mnt/cache/homelab-mcp missing — run install.sh from the tower"
+    fi
+fi
+
+# 5. Start homelab-mcp if installed but not running
+if [ -x "${MCP_RC}" ] && [ -d /mnt/cache/homelab-mcp/.venv ]; then
+    "${MCP_RC}" status >/dev/null 2>&1 || {
+        log "starting homelab-mcp"
+        "${MCP_RC}" start >>"${LOG}" 2>&1 || log "homelab-mcp start failed"
+    }
+fi
+
+log "boot-time restore: done"
+exit 0

@@ -1,0 +1,64 @@
+#!/bin/bash
+# /etc/rc.d/rc.homelab-mcp — start/stop/restart/status for the homelab-mcp server
+# on the Unraid vault. Mirrors the Unraid plugin convention so it can be
+# invoked by /etc/rc.local, cron, or hand.
+#
+# Layout: /opt/homelab-mcp/{homelab_mcp,...} + .venv + /etc/nut/mcp/config.yaml
+
+INSTALL_DIR="/mnt/cache/homelab-mcp"
+CONFIG_FILE="${CONFIG_FILE:-/etc/nut/mcp/config.yaml}"
+PIDFILE="/var/run/homelab-mcp.pid"
+LOGFILE="/var/log/homelab-mcp.log"
+
+is_running() {
+    [ -f "${PIDFILE}" ] && kill -0 "$(cat ${PIDFILE})" 2>/dev/null
+}
+
+start() {
+    if is_running; then
+        echo "homelab-mcp already running (pid $(cat ${PIDFILE}))"
+        return 0
+    fi
+    cd "${INSTALL_DIR}" || { echo "missing ${INSTALL_DIR}"; return 1; }
+    # shellcheck disable=SC1090
+    nohup "${INSTALL_DIR}/.venv/bin/python" -m homelab_mcp.main \
+        --config "${CONFIG_FILE}" \
+        >>"${LOGFILE}" 2>&1 &
+    echo $! > "${PIDFILE}"
+    echo "homelab-mcp started (pid $(cat ${PIDFILE})) — log: ${LOGFILE}"
+}
+
+stop() {
+    if [ ! -f "${PIDFILE}" ]; then
+        echo "homelab-mcp not running (no pidfile)"
+        return 0
+    fi
+    pid=$(cat "${PIDFILE}")
+    if kill -0 "${pid}" 2>/dev/null; then
+        kill "${pid}"
+        for _ in 1 2 3 4 5; do
+            kill -0 "${pid}" 2>/dev/null || break
+            sleep 1
+        done
+        kill -9 "${pid}" 2>/dev/null || true
+        echo "homelab-mcp stopped"
+    fi
+    rm -f "${PIDFILE}"
+}
+
+status() {
+    if is_running; then
+        echo "homelab-mcp running (pid $(cat ${PIDFILE}))"
+        return 0
+    fi
+    echo "homelab-mcp not running"
+    return 1
+}
+
+case "${1}" in
+    start)   start ;;
+    stop)    stop ;;
+    restart) stop; start ;;
+    status)  status ;;
+    *)       echo "usage: $0 {start|stop|restart|status}"; exit 1 ;;
+esac
