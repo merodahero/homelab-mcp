@@ -1,8 +1,6 @@
 """Integration tests for the MCP server."""
 
-import asyncio
 
-import pytest
 import httpx
 
 from homelab_mcp.core.config import Config, ServerConfig
@@ -34,6 +32,17 @@ class TestServerIntegration:
 
 class TestHealthEndpoint:
     """Tests for health check functionality."""
+
+    async def test_healthz_returns_ok(self):
+        """The HTTP process health endpoint returns a stable success payload."""
+        app = create_server(Config()).http_app()
+
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.get("/healthz")
+
+        assert response.status_code == 200
+        assert response.json() == {"status": "ok", "service": "homelab-mcp"}
 
     async def test_health_check_returns_dict(self):
         """Test that health check tool returns proper structure."""

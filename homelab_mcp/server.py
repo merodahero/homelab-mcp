@@ -4,11 +4,13 @@ import logging
 from typing import Any
 
 from fastmcp import FastMCP
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 
 from .core.config import Config, get_config
-from .core.health import HealthStatus, ServiceHealth, health_checker
-from .services.base import ServiceBase
+from .core.health import health_checker
 from .services.adguard import AdGuardHomeService
+from .services.base import ServiceBase
 from .services.netbox import NetBoxService
 from .services.nginx_proxy_manager import NginxProxyManagerService
 from .services.orbi import OrbiService
@@ -44,6 +46,11 @@ def create_server(config: Config | None = None) -> FastMCP:
     
     # Create MCP server
     mcp = FastMCP("Homelab MCP")
+
+    @mcp.custom_route("/healthz", methods=["GET"], include_in_schema=False)
+    async def healthz(_request: Request) -> JSONResponse:
+        """Return process liveness without requiring downstream services."""
+        return JSONResponse({"status": "ok", "service": "homelab-mcp"})
     
     # Register core health check tool
     @mcp.tool()

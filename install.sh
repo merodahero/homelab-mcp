@@ -30,6 +30,8 @@ rsync -a --delete \
   --exclude '.venv' --exclude '__pycache__' --exclude '.git' \
   --exclude 'config.tower-test.yaml' \
   "${LOCAL_DIR}/" "root@${VAULT_HOST}:${REMOTE_DIR}/"
+ssh "root@${VAULT_HOST}" \
+  "chmod 755 '${REMOTE_DIR}/rc.homelab-mcp' '${REMOTE_DIR}/rc.nut-mcp-restore'"
 
 # Make sure the /opt symlink exists (idempotent — survives the reboot that
 # would otherwise wipe the symlink because /opt is tmpfs).

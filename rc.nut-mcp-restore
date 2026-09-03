@@ -9,7 +9,7 @@
 #
 # Idempotent: safe to run on every boot.
 #
-# Triggered from /etc/rc.local tail after NUT is up.
+# Triggered by the User Scripts plugin at array start, after cache storage is mounted.
 
 set -eu
 
@@ -21,6 +21,17 @@ LOG="/var/log/nut-mcp-restore.log"
 log() { echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] $*" >> "${LOG}"; }
 
 log "boot-time restore: starting"
+
+# STEP 0: /etc/rc.d is tmpfs on Unraid — reinstall ourselves + the MCP rc
+# from the persistent cache-pool copy so this hook survives reboots.
+SRC_DIR="$(cd "$(dirname "$0")" && pwd)"
+if [ "$SRC_DIR" != "/etc/rc.d" ] && [ -d /mnt/cache/homelab-mcp ]; then
+    cp /mnt/cache/homelab-mcp/rc.homelab-mcp /etc/rc.d/rc.homelab-mcp 2>/dev/null || true
+    cp /mnt/cache/homelab-mcp/rc.nut-mcp-restore /etc/rc.d/rc.nut-mcp-restore 2>/dev/null || true
+    chmod 755 /etc/rc.d/rc.homelab-mcp /etc/rc.d/rc.nut-mcp-restore 2>/dev/null || true
+    ln -sfn /mnt/cache/homelab-mcp /opt/homelab-mcp
+    log "step0: reinstalled rc scripts from /mnt/cache/homelab-mcp"
+fi
 
 # 1. Make sure the watts-overlay UPS section is in ups.conf
 if ! grep -q "^\[srvspm3kil_realpower\]" "${UPS_CONF}" 2>/dev/null; then
