@@ -29,8 +29,13 @@ if [ "$SRC_DIR" != "/etc/rc.d" ] && [ -d /mnt/cache/homelab-mcp ]; then
     cp /mnt/cache/homelab-mcp/rc.homelab-mcp /etc/rc.d/rc.homelab-mcp 2>/dev/null || true
     cp /mnt/cache/homelab-mcp/rc.nut-mcp-restore /etc/rc.d/rc.nut-mcp-restore 2>/dev/null || true
     chmod 755 /etc/rc.d/rc.homelab-mcp /etc/rc.d/rc.nut-mcp-restore 2>/dev/null || true
+    if [ -e /opt/homelab-mcp ] && [ ! -L /opt/homelab-mcp ]; then
+        STALE_OPT="/opt/homelab-mcp.old.$(date -u +%Y%m%dT%H%M%SZ)"
+        mv /opt/homelab-mcp "$STALE_OPT"
+        log "step0: preserved stale /opt/homelab-mcp at $STALE_OPT"
+    fi
     ln -sfn /mnt/cache/homelab-mcp /opt/homelab-mcp
-    log "step0: reinstalled rc scripts from /mnt/cache/homelab-mcp"
+    log "step0: reinstalled rc scripts and /opt compatibility link from /mnt/cache/homelab-mcp"
 fi
 
 # 1. Make sure the watts-overlay UPS section is in ups.conf
