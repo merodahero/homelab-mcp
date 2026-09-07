@@ -3,8 +3,9 @@
 # existing NUT install. Idempotent: safe to re-run.
 #
 # What it does:
-#   1. SCPs the project to /opt/homelab-mcp on the vault
-#   2. Installs Python deps into a venv at /opt/homelab-mcp/.venv
+#   1. Syncs the project to /mnt/cache/homelab-mcp on the vault
+#   2. Installs Python deps into its venv and creates /opt/homelab-mcp as a
+#      compatibility symlink
 #   3. Writes /etc/nut/mcp/config.yaml (the deploy config, vault-specific)
 #   4. Installs /etc/rc.d/rc.homelab-mcp (start|stop|restart|status)
 #   5. Starts the service and verifies /healthz-equivalent (uptime + tools/list)
@@ -37,6 +38,7 @@ ssh "root@${VAULT_HOST}" \
 # would otherwise wipe the symlink because /opt is tmpfs).
 ssh "root@${VAULT_HOST}" bash <<'REMOTE'
 set -euo pipefail
+mkdir -p /opt
 if [ ! -L /opt/homelab-mcp ] || [ "$(readlink /opt/homelab-mcp)" != "/mnt/cache/homelab-mcp" ]; then
   if [ -e /opt/homelab-mcp ] && [ ! -L /opt/homelab-mcp ]; then
     # stale non-symlink dir from an old install — move it aside, don't lose it

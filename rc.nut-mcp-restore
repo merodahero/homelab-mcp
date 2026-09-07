@@ -13,28 +13,36 @@
 
 set -eu
 
-UPS_CONF="/etc/nut/ups.conf"
-MCP_RC="/etc/rc.d/rc.homelab-mcp"
-HELPER="/etc/nut/dummy-ups/ups_realpower.py"
-LOG="/var/log/nut-mcp-restore.log"
+MCP_CACHE_DIR="${MCP_CACHE_DIR:-/mnt/cache/homelab-mcp}"
+OPT_DIR="${OPT_DIR:-/opt}"
+OPT_LINK="${OPT_DIR}/homelab-mcp"
+RC_DIR="${RC_DIR:-/etc/rc.d}"
+UPS_CONF="${UPS_CONF:-/etc/nut/ups.conf}"
+MCP_RC="${MCP_RC:-${RC_DIR}/rc.homelab-mcp}"
+HELPER="${HELPER:-/etc/nut/dummy-ups/ups_realpower.py}"
+LOG="${LOG:-/var/log/nut-mcp-restore.log}"
 
 log() { echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] $*" >> "${LOG}"; }
 
 log "boot-time restore: starting"
 
+# /opt is tmpfs and may not exist yet at array start. Create the parent before
+# any test, move, or link involving the compatibility path.
+mkdir -p "${OPT_DIR}"
+
 # STEP 0: /etc/rc.d is tmpfs on Unraid — reinstall ourselves + the MCP rc
 # from the persistent cache-pool copy so this hook survives reboots.
 SRC_DIR="$(cd "$(dirname "$0")" && pwd)"
-if [ "$SRC_DIR" != "/etc/rc.d" ] && [ -d /mnt/cache/homelab-mcp ]; then
-    cp /mnt/cache/homelab-mcp/rc.homelab-mcp /etc/rc.d/rc.homelab-mcp 2>/dev/null || true
-    cp /mnt/cache/homelab-mcp/rc.nut-mcp-restore /etc/rc.d/rc.nut-mcp-restore 2>/dev/null || true
-    chmod 755 /etc/rc.d/rc.homelab-mcp /etc/rc.d/rc.nut-mcp-restore 2>/dev/null || true
-    if [ -e /opt/homelab-mcp ] && [ ! -L /opt/homelab-mcp ]; then
-        STALE_OPT="/opt/homelab-mcp.old.$(date -u +%Y%m%dT%H%M%SZ)"
-        mv /opt/homelab-mcp "$STALE_OPT"
+if [ "$SRC_DIR" != "${RC_DIR}" ] && [ -d "${MCP_CACHE_DIR}" ]; then
+    cp "${MCP_CACHE_DIR}/rc.homelab-mcp" "${RC_DIR}/rc.homelab-mcp" 2>/dev/null || true
+    cp "${MCP_CACHE_DIR}/rc.nut-mcp-restore" "${RC_DIR}/rc.nut-mcp-restore" 2>/dev/null || true
+    chmod 755 "${RC_DIR}/rc.homelab-mcp" "${RC_DIR}/rc.nut-mcp-restore" 2>/dev/null || true
+    if [ -e "${OPT_LINK}" ] && [ ! -L "${OPT_LINK}" ]; then
+        STALE_OPT="${OPT_LINK}.old.$(date -u +%Y%m%dT%H%M%SZ)"
+        mv "${OPT_LINK}" "$STALE_OPT"
         log "step0: preserved stale /opt/homelab-mcp at $STALE_OPT"
     fi
-    ln -sfn /mnt/cache/homelab-mcp /opt/homelab-mcp
+    ln -sfn "${MCP_CACHE_DIR}" "${OPT_LINK}"
     log "step0: reinstalled rc scripts and /opt compatibility link from /mnt/cache/homelab-mcp"
 fi
 
@@ -81,9 +89,9 @@ fi
 
 # 4. /opt/homelab-mcp is a symlink to /mnt/cache/homelab-mcp — durable across
 #    reboots (cache pool). Just ensure the symlink exists.
-if [ ! -e /opt/homelab-mcp ]; then
-    if [ -d /mnt/cache/homelab-mcp/.venv ]; then
-        ln -sfn /mnt/cache/homelab-mcp /opt/homelab-mcp
+if [ ! -e "${OPT_LINK}" ]; then
+    if [ -d "${MCP_CACHE_DIR}/.venv" ]; then
+        ln -sfn "${MCP_CACHE_DIR}" "${OPT_LINK}"
         log "re-created /opt/homelab-mcp symlink"
     else
         log "ERROR: /mnt/cache/homelab-mcp missing — run install.sh from the tower"
@@ -91,7 +99,7 @@ if [ ! -e /opt/homelab-mcp ]; then
 fi
 
 # 5. Start homelab-mcp if installed but not running
-if [ -x "${MCP_RC}" ] && [ -d /mnt/cache/homelab-mcp/.venv ]; then
+if [ -x "${MCP_RC}" ] && [ -d "${MCP_CACHE_DIR}/.venv" ]; then
     "${MCP_RC}" status >/dev/null 2>&1 || {
         log "starting homelab-mcp"
         "${MCP_RC}" start >>"${LOG}" 2>&1 || log "homelab-mcp start failed"

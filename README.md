@@ -145,6 +145,22 @@ docker run -d --name homelab-mcp \
   homelab-mcp
 ```
 
+#### Native cache-pool deployment
+
+This fork also includes `install.sh` for a native Unraid deployment. It stores
+the application under `/mnt/cache/homelab-mcp`, creates
+`/opt/homelab-mcp` as a compatibility symlink, installs the rc script, and
+smoke-tests the Streamable HTTP endpoint.
+
+```bash
+bash ./install.sh
+```
+
+On Unraid, `/opt` is volatile and the directory itself may be absent when the
+array-start User Script runs. `rc.nut-mcp-restore` therefore creates `/opt`
+before restoring the compatibility link. Keep the persistent restore script
+executable and run `bash tests/test_boot_path.sh` after changing this boot path.
+
 ### Kubernetes
 
 ```yaml
